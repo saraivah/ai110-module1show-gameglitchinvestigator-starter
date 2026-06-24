@@ -1,6 +1,7 @@
 import random
 import streamlit as st
 
+
 def get_range_for_difficulty(difficulty: str):
     if difficulty == "Easy":
         return 1, 20
@@ -14,10 +15,8 @@ def get_range_for_difficulty(difficulty: str):
 def parse_guess(raw: str):
     if raw is None:
         return False, None, "Enter a guess."
-
     if raw == "":
         return False, None, "Enter a guess."
-
     try:
         if "." in raw:
             value = int(float(raw))
@@ -25,44 +24,33 @@ def parse_guess(raw: str):
             value = int(raw)
     except Exception:
         return False, None, "That is not a number."
-
     return True, value, None
 
 
 def check_guess(guess, secret):
+    # BUG 5 FIX: always compare int to int — removed the even-attempt string cast
+    # BUG 6 FIX: swapped the feedback messages (were inverted)
     if guess == secret:
         return "Win", "🎉 Correct!"
-
-    try:
-        if guess > secret:
-            return "Too High", "📈 Go HIGHER!"
-        else:
-            return "Too Low", "📉 Go LOWER!"
-    except TypeError:
-        g = str(guess)
-        if g == secret:
-            return "Win", "🎉 Correct!"
-        if g > secret:
-            return "Too High", "📈 Go HIGHER!"
-        return "Too Low", "📉 Go LOWER!"
+    if guess > secret:
+        return "Too High", "📉 Go LOWER!"
+    return "Too Low", "📈 Go HIGHER!"
 
 
 def update_score(current_score: int, outcome: str, attempt_number: int):
     if outcome == "Win":
-        points = 100 - 10 * (attempt_number + 1)
+        # BUG 8 FIX: removed the extra +1 (attempt_number is already incremented)
+        points = 100 - 10 * attempt_number
         if points < 10:
             points = 10
         return current_score + points
 
-    if outcome == "Too High":
-        if attempt_number % 2 == 0:
-            return current_score + 5
-        return current_score - 5
-
-    if outcome == "Too Low":
+    # BUG 7 FIX: removed the +5 reward for wrong guesses
+    if outcome in ("Too High", "Too Low"):
         return current_score - 5
 
     return current_score
+
 
 st.set_page_config(page_title="Glitchy Guesser", page_icon="🎮")
 
@@ -92,8 +80,9 @@ st.sidebar.caption(f"Attempts allowed: {attempt_limit}")
 if "secret" not in st.session_state:
     st.session_state.secret = random.randint(low, high)
 
+# BUG 2 FIX: initialize attempts to 0, not 1
 if "attempts" not in st.session_state:
-    st.session_state.attempts = 1
+    st.session_state.attempts = 0
 
 if "score" not in st.session_state:
     st.session_state.score = 0
@@ -106,8 +95,9 @@ if "history" not in st.session_state:
 
 st.subheader("Make a guess")
 
+# BUG 1 FIX: use low/high variables instead of hardcoded "1 and 100"
 st.info(
-    f"Guess a number between 1 and 100. "
+    f"Guess a number between {low} and {high}. "
     f"Attempts left: {attempt_limit - st.session_state.attempts}"
 )
 
@@ -132,8 +122,13 @@ with col3:
     show_hint = st.checkbox("Show hint", value=True)
 
 if new_game:
+    # BUG 3 FIX: use low/high from difficulty, not hardcoded 1–100
+    # BUG 4 FIX: reset all session state, not just attempts and secret
     st.session_state.attempts = 0
-    st.session_state.secret = random.randint(1, 100)
+    st.session_state.secret = random.randint(low, high)
+    st.session_state.score = 0
+    st.session_state.status = "playing"
+    st.session_state.history = []
     st.success("New game started.")
     st.rerun()
 
@@ -155,12 +150,8 @@ if submit:
     else:
         st.session_state.history.append(guess_int)
 
-        if st.session_state.attempts % 2 == 0:
-            secret = str(st.session_state.secret)
-        else:
-            secret = st.session_state.secret
-
-        outcome, message = check_guess(guess_int, secret)
+        # BUG 5 FIX: removed the even/odd secret type toggle — always use int
+        outcome, message = check_guess(guess_int, st.session_state.secret)
 
         if show_hint:
             st.warning(message)

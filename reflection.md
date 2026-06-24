@@ -7,16 +7,19 @@ Answer each question in 3 to 5 sentences. Be specific and honest about what actu
 - What did the game look like the first time you ran it?
 - List at least two concrete bugs you noticed at the start  
   (for example: "the hints were backwards").
-
+  -buttons were not working
+  - would not tell me my number
+- attempt log wasn't updating correctly
+- entered 99, said go higher, entred 100, said go lower
 **Bug Reproduction Log**
 
 Document at least 3 bugs you found. Add rows as needed.
 
 | Input | Expected Behavior | Actual Behavior | Console Output / Error |
 |-------|-------------------|-----------------|------------------------|
-| | | | |
-| | | | |
-| | | | |
+| | 99 |  Too high               Too low          none
+| | 100 |  Right answer          Too high          none
+| | 33 |  No behavior           No behavior       none
 
 ---
 
